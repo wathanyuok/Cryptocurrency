@@ -1,14 +1,15 @@
-const prisma = require('./prisma');
+import prisma from './prisma.js';
 
 const Order = {
-  user: (orderId) => {
-    return prisma.order.findUnique({
+  user: async (orderId) => {
+    const order = await prisma.order.findUnique({
       where: { id: parseInt(orderId) },
       include: { user: true }
-    }).then(order => order.user);
+    });
+    return order?.user;
   },
   
-  trades: (orderId) => {
+  trades: async (orderId) => {
     return prisma.trade.findMany({
       where: {
         OR: [
@@ -20,4 +21,4 @@ const Order = {
   }
 };
 
-module.exports = Order;
+export default Order;

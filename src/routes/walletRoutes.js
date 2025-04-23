@@ -1,11 +1,9 @@
-const express = require('express');
+import express from 'express';
+import userController from '../controllers/userController.js';
+
 const router = express.Router();
-const walletController = require('../controllers/walletController');
 
-router.post('/:id/deposit', walletController.deposit);
+router.post('/register', userController.register);
+router.get('/:id', userController.getProfile);
 
-router.post('/:id/transfer', walletController.transfer);
-
-router.post('/:id/withdraw', walletController.withdraw);
-
-module.exports = router;
+export default router;

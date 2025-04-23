@@ -1,5 +1,4 @@
-const Order = require('../models/Order');
-const prisma = require('../models/prisma');
+import prisma from '../models/prisma.js';
 
 const orderController = {
   createOrder: async (req, res) => {
@@ -8,7 +7,7 @@ const orderController = {
       
       const order = await prisma.order.create({
         data: {
-          userId,
+          userId: parseInt(userId),
           currencyPair,
           orderType,
           price: parseFloat(price),
@@ -16,7 +15,6 @@ const orderController = {
           status: 'open'
         }
       });
-      
       
       res.status(201).json({ order });
     } catch (error) {
@@ -26,8 +24,7 @@ const orderController = {
       });
     }
   },
-  
-  // Get order details with trades
+
   getOrderDetails: async (req, res) => {
     try {
       const { id } = req.params;
@@ -55,4 +52,4 @@ const orderController = {
   }
 };
 
-module.exports = orderController;
+export default orderController;

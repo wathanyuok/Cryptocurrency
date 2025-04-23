@@ -1,4 +1,4 @@
-const prisma = require('./prisma');
+import prisma from './prisma.js';
 
 const User = {
   create: (data) => {
@@ -24,4 +24,4 @@ const User = {
   }
 };
 
-module.exports = User;
+export default User;

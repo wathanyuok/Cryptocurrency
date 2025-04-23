@@ -1,5 +1,4 @@
-const Transaction = require('../models/Transaction');
-const prisma = require('../models/prisma');
+import prisma from '../models/prisma.js';
 
 const transactionController = {
   getTransaction: async (req, res) => {
@@ -9,8 +8,16 @@ const transactionController = {
       const transaction = await prisma.transaction.findUnique({
         where: { id: parseInt(id) },
         include: {
-          senderWallet: { include: { user: true } },
-          receiverWallet: { include: { user: true } },
+          senderWallet: { 
+            include: { 
+              user: true 
+            } 
+          },
+          receiverWallet: { 
+            include: { 
+              user: true 
+            } 
+          },
           currency: true,
           externalTransfer: true
         }
@@ -30,4 +37,4 @@ const transactionController = {
   }
 };
 
-module.exports = transactionController;
+export default transactionController;

@@ -1,136 +1,106 @@
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 async function main() {
-  // สร้างสกุลเงิน
-  const currencies = await Promise.all([
-    prisma.currency.upsert({
-      where: { code: 'THB' },
-      update: {},
-      create: { code: 'THB', type: 'fiat', currentPrice: 1.0 }
-    }),
-    prisma.currency.upsert({
-      where: { code: 'USD' },
-      update: {},
-      create: { code: 'USD', type: 'fiat', currentPrice: 33.0 }
-    }),
-    prisma.currency.upsert({
-      where: { code: 'BTC' },
-      update: {},
-      create: { code: 'BTC', type: 'crypto', currentPrice: 1200000.0 }
-    }),
-    prisma.currency.upsert({
-      where: { code: 'ETH' },
-      update: {},
-      create: { code: 'ETH', type: 'crypto', currentPrice: 70000.0 }
-    })
-  ])
+  // ลบข้อมูลเดิมทั้งหมดเพื่อป้องกัน conflicts
+  await prisma.transaction.deleteMany();
+  await prisma.externalTransfer.deleteMany();
+  await prisma.walletCurrency.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.wallet.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.currency.deleteMany();
+
+  // สร้างสกุลเงิน (ใช้ create แทน upsert)
+  const thb = await prisma.currency.create({
+    data: { code: 'THB', type: 'fiat', currentPrice: 1.0 }
+  });
+  const usd = await prisma.currency.create({
+    data: { code: 'USD', type: 'fiat', currentPrice: 33.0 }
+  });
+  const btc = await prisma.currency.create({
+    data: { code: 'BTC', type: 'crypto', currentPrice: 1200000.0 }
+  });
+  const eth = await prisma.currency.create({
+    data: { code: 'ETH', type: 'crypto', currentPrice: 70000.0 }
+  });
 
   // สร้างผู้ใช้
-  const users = await Promise.all([
-    prisma.user.upsert({
-      where: { email: 'user1@example.com' },
-      update: {},
-      create: {
-        username: 'user1',
-        email: 'user1@example.com',
-        password: 'password123',
-        status: 'verified'
-      }
-    }),
-    prisma.user.upsert({
-      where: { email: 'user2@example.com' },
-      update: {},
-      create: {
-        username: 'user2',
-        email: 'user2@example.com',
-        password: 'password123',
-        status: 'verified'
-      }
-    })
-  ])
+  const user1 = await prisma.user.create({
+    data: {
+      username: 'user1',
+      email: 'user1@example.com',
+      password: 'password123',
+      status: 'verified'
+    }
+  });
+  const user2 = await prisma.user.create({
+    data: {
+      username: 'user2',
+      email: 'user2@example.com',
+      password: 'password123',
+      status: 'verified'
+    }
+  });
 
   // สร้างกระเป๋าเงิน
-  const wallets = await Promise.all(
-    users.map(user => 
-      prisma.wallet.create({ data: { userId: user.id } })
-    )
-  )
+  const wallet1 = await prisma.wallet.create({ data: { userId: user1.id } });
+  const wallet2 = await prisma.wallet.create({ data: { userId: user2.id } });
 
-  // เพิ่มเงินในกระเป๋า
-  await Promise.all([
-    prisma.walletCurrency.create({
-      data: {
-        walletId: wallets[0].id,
-        currencyId: currencies[0].id, // THB
-        balance: 100000.0
-      }
-    }),
-    prisma.walletCurrency.create({
-      data: {
-        walletId: wallets[0].id,
-        currencyId: currencies[2].id, // BTC
-        balance: 0.5
-      }
-    }),
-    prisma.walletCurrency.create({
-      data: {
-        walletId: wallets[1].id,
-        currencyId: currencies[1].id, // USD
-        balance: 5000.0
-      }
-    }),
-    prisma.walletCurrency.create({
-      data: {
-        walletId: wallets[1].id,
-        currencyId: currencies[3].id, // ETH
-        balance: 5.0
-      }
-    })
-  ])
-
-  // สร้างคำสั่งซื้อ
-  await prisma.order.createMany({
+  // เติมเงินในกระเป๋า (ใช้ createMany สำหรับประสิทธิภาพ)
+  await prisma.walletCurrency.createMany({
     data: [
-      {
-        userId: users[0].id,
+      { walletId: wallet1.id, currencyId: thb.id, balance: 100000.0 },
+      { walletId: wallet1.id, currencyId: btc.id, balance: 0.5 },
+      { walletId: wallet2.id, currencyId: usd.id, balance: 5000.0 },
+      { walletId: wallet2.id, currencyId: eth.id, balance: 5.0 }
+    ]
+  });
+
+  // สร้างคำสั่งซื้อ/ขาย
+  const [order1, order2] = await prisma.$transaction([
+    prisma.order.create({
+      data: {
+        userId: user1.id,
         currencyPair: 'ETH/THB',
         orderType: 'buy',
         price: 65000.0,
         quantity: 1.0,
         status: 'open'
-      },
-      {
-        userId: users[1].id,
+      }
+    }),
+    prisma.order.create({
+      data: {
+        userId: user2.id,
         currencyPair: 'ETH/THB',
         orderType: 'sell',
         price: 75000.0,
         quantity: 1.0,
         status: 'open'
       }
-    ]
-  })
+    })
+  ]);
 
   // สร้างธุรกรรม
   await prisma.transaction.create({
     data: {
-      senderWalletId: wallets[0].id,
-      receiverWalletId: wallets[1].id,
-      currencyId: currencies[2].id, // BTC
+      senderWalletId: wallet1.id,
+      receiverWalletId: wallet2.id,
+      currencyId: btc.id,
       amount: 0.1,
       txnType: 'internal',
       status: 'completed'
     }
-  })
+  });
 
-  console.log('✅ Seeding completed successfully')
+  console.log('Seeding completed successfully');
 }
 
 main()
   .catch(e => {
-    console.error('❌ Seeding failed:', e)
-    process.exit(1)
+    console.error('Seeding error:', e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });

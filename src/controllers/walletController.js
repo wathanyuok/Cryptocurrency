@@ -1,55 +1,40 @@
-const Wallet = require('../models/Wallet');
-const Transaction = require('../models/Transaction');
-const prisma = require('../models/prisma');
+import prisma from '../models/prisma.js';
 
-const walletController = {
-  deposit: async (req, res) => {
+const transactionController = {
+  getTransaction: async (req, res) => {
     try {
       const { id } = req.params;
-      const { currencyId, amount } = req.body;
       
-
-      
-      res.json({ message: 'Deposit successful' });
-    } catch (error) {
-      res.status(500).json({
-        message: 'Error making deposit',
-        error: error.message
+      const transaction = await prisma.transaction.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          senderWallet: { 
+            include: { 
+              user: true 
+            } 
+          },
+          receiverWallet: { 
+            include: { 
+              user: true 
+            } 
+          },
+          currency: true,
+          externalTransfer: true
+        }
       });
-    }
-  },
-  
-  transfer: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { receiverWalletId, currencyId, amount } = req.body;
       
-
+      if (!transaction) {
+        return res.status(404).json({ message: 'Transaction not found' });
+      }
       
-      res.json({ message: 'Transfer successful' });
+      res.json({ transaction });
     } catch (error) {
       res.status(500).json({
-        message: 'Error making transfer',
-        error: error.message
-      });
-    }
-  },
-  
-  withdraw: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { currencyId, amount, externalWalletAddress } = req.body;
-      
-     
-      
-      res.json({ message: 'Withdrawal submitted' });
-    } catch (error) {
-      res.status(500).json({
-        message: 'Error processing withdrawal',
+        message: 'Error retrieving transaction',
         error: error.message
       });
     }
   }
 };
 
-module.exports = walletController;
+export default transactionController;

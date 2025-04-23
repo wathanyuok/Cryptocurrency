@@ -1,32 +1,35 @@
-const prisma = require('./prisma');
+import prisma from './prisma.js';
 
 const Transaction = {
-  senderWallet: (transactionId) => {
-    return prisma.transaction.findUnique({
+  senderWallet: async (transactionId) => {
+    const txn = await prisma.transaction.findUnique({
       where: { id: parseInt(transactionId) },
       include: { senderWallet: true }
-    }).then(txn => txn.senderWallet);
+    });
+    return txn?.senderWallet;
   },
   
-  receiverWallet: (transactionId) => {
-    return prisma.transaction.findUnique({
+  receiverWallet: async (transactionId) => {
+    const txn = await prisma.transaction.findUnique({
       where: { id: parseInt(transactionId) },
       include: { receiverWallet: true }
-    }).then(txn => txn.receiverWallet);
+    });
+    return txn?.receiverWallet;
   },
   
-  currency: (transactionId) => {
-    return prisma.transaction.findUnique({
+  currency: async (transactionId) => {
+    const txn = await prisma.transaction.findUnique({
       where: { id: parseInt(transactionId) },
       include: { currency: true }
-    }).then(txn => txn.currency);
+    });
+    return txn?.currency;
   },
   
-  externalTransfer: (transactionId) => {
+  externalTransfer: async (transactionId) => {
     return prisma.externalTransfer.findUnique({
       where: { transactionId: parseInt(transactionId) }
     });
   }
 };
 
-module.exports = Transaction;
+export default Transaction;

@@ -1,4 +1,4 @@
-const prisma = require('./prisma');
+import prisma from './prisma.js';
 
 const Wallet = {
   user: (walletId) => {
@@ -30,4 +30,4 @@ const Wallet = {
   }
 };
 
-module.exports = Wallet;
+export default Wallet;
