@@ -1,0 +1,98 @@
+// This is your Prisma schema file
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  password  String 
+  email     String    @unique
+  phone     String?
+  createdAt DateTime  @default(now())
+  status    String    // verified/pending
+  wallets   Wallet[]
+  orders    Order[]
+}
+
+model Wallet {
+  id                Int               @id @default(autoincrement())
+  user              User              @relation(fields: [userId], references: [id])
+  userId            Int
+  walletCurrencies  WalletCurrency[]
+  sentTransactions      Transaction[]     @relation("SenderWallet")
+  receivedTransactions  Transaction[]     @relation("ReceiverWallet")
+}
+
+model Currency {
+  id              Int               @id @default(autoincrement())
+  code            String            @unique // BTC, ETH, THB, USD
+  type            String            // crypto/fiat
+  currentPrice    Float
+  walletCurrencies WalletCurrency[]
+  transactions    Transaction[]
+}
+
+model WalletCurrency {
+  id          Int       @id @default(autoincrement())
+  wallet      Wallet    @relation(fields: [walletId], references: [id])
+  walletId    Int
+  currency    Currency  @relation(fields: [currencyId], references: [id])
+  currencyId  Int
+  balance     Float     @default(0)
+  
+  @@unique([walletId, currencyId])
+}
+
+model Order {
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id])
+  userId        Int
+  currencyPair  String    // BTC/THB, ETH/USD
+  orderType     String    // buy/sell
+  price         Float
+  quantity      Float
+  status        String    // open/filled/cancelled
+  createdAt     DateTime  @default(now())
+  buyTrades     Trade[]   @relation("BuyOrder")
+  sellTrades    Trade[]   @relation("SellOrder")
+}
+
+model Trade {
+  id            Int       @id @default(autoincrement())
+  buyOrder      Order     @relation("BuyOrder", fields: [buyOrderId], references: [id])
+  buyOrderId    Int
+  sellOrder     Order     @relation("SellOrder", fields: [sellOrderId], references: [id])
+  sellOrderId   Int
+  price         Float
+  quantity      Float
+  tradeDate     DateTime  @default(now())
+}
+
+model Transaction {
+  id                  Int               @id @default(autoincrement())
+  senderWallet        Wallet            @relation("SenderWallet", fields: [senderWalletId], references: [id])
+  senderWalletId      Int
+  receiverWallet      Wallet            @relation("ReceiverWallet", fields: [receiverWalletId], references: [id])
+  receiverWalletId    Int
+  currency            Currency          @relation(fields: [currencyId], references: [id])
+  currencyId          Int
+  amount              Float
+  txnType             String            // internal/external
+  status              String            // pending/completed/failed
+  timestamp           DateTime          @default(now())
+  externalTransfer    ExternalTransfer?
+}
+
+model ExternalTransfer {
+  id                    Int         @id @default(autoincrement())
+  transaction           Transaction @relation(fields: [transactionId], references: [id])
+  transactionId         Int         @unique
+  externalWalletAddress String
+  transactionHash       String      @unique
+}
