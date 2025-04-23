@@ -1,12 +1,22 @@
-# React + Vite
+# Step1
+-- bash
+git clone https://github.com/wathanyuok/Cryptocurrency.git .
+npm init -y
+npm install
+npx prisma init
+--
+## Step 2 .env
+ใส่รหัส db ตรง xxxx ในไฟล์.env: DATABASE_URL="mysql://root:xxxx@localhost:3306/crypedb"
+--
+## Step 3 Prisma
+npx prisma db push
+# or
+npx prisma migrate dev --name init
+npx prisma db seed
+---
+## Step 4 npm start
+npm start
+---
+image structure ![alt text](image.png)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.

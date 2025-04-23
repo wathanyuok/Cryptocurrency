@@ -1,4 +1,3 @@
-// This is your Prisma schema file
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
@@ -15,7 +14,7 @@ model User {
   email     String    @unique
   phone     String?
   createdAt DateTime  @default(now())
-  status    String    // verified/pending
+  status    String    
   wallets   Wallet[]
   orders    Order[]
 }
@@ -31,8 +30,8 @@ model Wallet {
 
 model Currency {
   id              Int               @id @default(autoincrement())
-  code            String            @unique // BTC, ETH, THB, USD
-  type            String            // crypto/fiat
+  code            String            @unique 
+  type            String          
   currentPrice    Float
   walletCurrencies WalletCurrency[]
   transactions    Transaction[]
@@ -53,11 +52,11 @@ model Order {
   id            Int       @id @default(autoincrement())
   user          User      @relation(fields: [userId], references: [id])
   userId        Int
-  currencyPair  String    // BTC/THB, ETH/USD
-  orderType     String    // buy/sell
+  currencyPair  String   
+  orderType     String   
   price         Float
   quantity      Float
-  status        String    // open/filled/cancelled
+  status        String    
   createdAt     DateTime  @default(now())
   buyTrades     Trade[]   @relation("BuyOrder")
   sellTrades    Trade[]   @relation("SellOrder")
@@ -83,8 +82,8 @@ model Transaction {
   currency            Currency          @relation(fields: [currencyId], references: [id])
   currencyId          Int
   amount              Float
-  txnType             String            // internal/external
-  status              String            // pending/completed/failed
+  txnType             String          
+  status              String           
   timestamp           DateTime          @default(now())
   externalTransfer    ExternalTransfer?
 }

@@ -2,7 +2,6 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // ลบข้อมูลเดิมทั้งหมดเพื่อป้องกัน conflicts
   await prisma.transaction.deleteMany();
   await prisma.externalTransfer.deleteMany();
   await prisma.walletCurrency.deleteMany();
@@ -11,7 +10,6 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.currency.deleteMany();
 
-  // สร้างสกุลเงิน (ใช้ create แทน upsert)
   const thb = await prisma.currency.create({
     data: { code: 'THB', type: 'fiat', currentPrice: 1.0 }
   });
@@ -25,7 +23,6 @@ async function main() {
     data: { code: 'ETH', type: 'crypto', currentPrice: 70000.0 }
   });
 
-  // สร้างผู้ใช้
   const user1 = await prisma.user.create({
     data: {
       username: 'user1',
@@ -43,11 +40,9 @@ async function main() {
     }
   });
 
-  // สร้างกระเป๋าเงิน
   const wallet1 = await prisma.wallet.create({ data: { userId: user1.id } });
   const wallet2 = await prisma.wallet.create({ data: { userId: user2.id } });
 
-  // เติมเงินในกระเป๋า (ใช้ createMany สำหรับประสิทธิภาพ)
   await prisma.walletCurrency.createMany({
     data: [
       { walletId: wallet1.id, currencyId: thb.id, balance: 100000.0 },
@@ -57,7 +52,6 @@ async function main() {
     ]
   });
 
-  // สร้างคำสั่งซื้อ/ขาย
   const [order1, order2] = await prisma.$transaction([
     prisma.order.create({
       data: {
@@ -81,7 +75,6 @@ async function main() {
     })
   ]);
 
-  // สร้างธุรกรรม
   await prisma.transaction.create({
     data: {
       senderWalletId: wallet1.id,

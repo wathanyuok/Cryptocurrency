@@ -5,18 +5,16 @@ const userController = {
     try {
       const { username, email, password, phone } = req.body;
       
-      // สร้างผู้ใช้ผ่าน Prisma
       const user = await prisma.user.create({
         data: {
           username,
           email,
-          password, // ควรเข้ารหัสก่อนบันทึก
+          password, 
           phone,
           status: 'pending'
         }
       });
       
-      // สร้างกระเป๋าเงินเริ่มต้น
       const wallet = await prisma.wallet.create({
         data: { userId: user.id }
       });
@@ -41,7 +39,6 @@ const userController = {
     try {
       const { id } = req.params;
       
-      // ดึงข้อมูลผู้ใช้พร้อมกระเป๋าเงิน
       const user = await prisma.user.findUnique({
         where: { id: parseInt(id) },
         include: {
